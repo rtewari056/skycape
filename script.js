@@ -1,81 +1,48 @@
-const APIURL = "https://api.github.com/users/";
+const apikey = "3265874a2c77ae4a04bb96236a642d2f";
 
 const main = document.getElementById("main");
 const form = document.getElementById("form");
 const search = document.getElementById("search");
 
-getUser("rtewari056");
+const url = (city) =>
+    `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apikey}`;
 
-async function getUser(username) {
-    const resp = await fetch(APIURL + username);
+async function getWeatherByLocation(city) {
+    const resp = await fetch(url(city), { origin: "cors" });
     const respData = await resp.json();
 
-    createUserCard(respData);
+    console.log(respData);
 
-    getRepos(username);
+    addWeatherToPage(respData);
 }
 
-async function getRepos(username) {
-    const resp = await fetch(APIURL + username + "/repos");
-    const respData = await resp.json();
+function addWeatherToPage(data) {
+    const temp = KtoC(data.main.temp);
 
-    addReposToCard(respData);
-}
+    const weather = document.createElement("div");
+    weather.classList.add("weather");
 
-function createUserCard(user) {
-    const cardHTML = `
-        <div class="card">
-            <div>
-                <img class="avatar" src="${user.avatar_url}" alt="${user.name}" />
-            </div>
-            <div class="user-info">
-                <h2>${user.name}</h2>
-                <p>${user.bio}</p>
-
-                <br>
-
-                <ul class="info">
-                    <li>${user.followers}<strong>Followers</strong></li>
-                    <li>${user.following}<strong>Following</strong></li>
-                    <li>${user.public_repos}<strong>Repos</strong></li>
-                </ul>
-
-                <br>
-
-                <div id="repos"></div>
-            </div>
-        </div>
+    weather.innerHTML = `
+        <h2><img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" /> ${temp}°C <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" /></h2>
+        <small>${data.weather[0].main}</small>
     `;
 
-    main.innerHTML = cardHTML;
+    // cleanup
+    main.innerHTML = "";
+
+    main.appendChild(weather);
 }
 
-function addReposToCard(repos) {
-    const reposEl = document.getElementById("repos");
-
-    repos
-        .sort((a, b) => b.stargazers_count - a.stargazers_count)
-        .slice(0, 10)
-        .forEach((repo) => {
-            const repoEl = document.createElement("a");
-            repoEl.classList.add("repo");
-
-            repoEl.href = repo.html_url;
-            repoEl.target = "_blank";
-            repoEl.innerText = repo.name;
-
-            reposEl.appendChild(repoEl);
-        });
+function KtoC(K) {
+    return Math.floor(K - 273.15);
 }
 
 form.addEventListener("submit", (e) => {
     e.preventDefault();
 
-    const user = search.value;
+    const city = search.value;
 
-    if (user) {
-        getUser(user);
-
-        search.value = "";
+    if (city) {
+        getWeatherByLocation(city);
     }
 });
